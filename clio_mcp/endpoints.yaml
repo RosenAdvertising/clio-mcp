@@ -1,0 +1,703 @@
+# Clio MCP — Endpoint Schema Registry
+#
+# This file is the single source of truth for field lists sent to the Clio API.
+# client.py reads requested_fields from here at runtime.
+#
+# Rules:
+#   - requested_fields MUST be a subset of allowed_fields
+#   - allowed_fields = fields confirmed to work against the live Clio API
+#   - Do NOT add a field to requested_fields without first adding it to allowed_fields
+#   - Field expansions (e.g. "matter{id,display_number}") are resource-specific —
+#     verify against Clio API docs before adding any expansion to a new resource
+#
+# Known invalid expansions (do not add back):
+#   - bills: matter{...} — InvalidFields
+#   - trust_accounts: matter{...} — empty body
+#   - timer: matter{...}, user{...} — InvalidFields
+
+tools:
+  # ── Identity ──────────────────────────────────────────────────────────────
+
+  - name: who_am_i
+    method: GET
+    path: /api/v4/users/who_am_i
+    allowed_fields: [id, name, email, enabled]
+    requested_fields: [id, name, email, enabled]
+    required_params: []
+    optional_params: []
+    response_shape: { data: object }
+    read_write: read
+
+  # ── Matters ───────────────────────────────────────────────────────────────
+
+  - name: list_matters
+    method: GET
+    path: /api/v4/matters
+    allowed_fields:
+      - id
+      - display_number
+      - description
+      - status
+      - "practice_area{id,name}"
+      - "client{id,name}"
+      - pending_date
+      - open_date
+      - close_date
+      - statute_of_limitations
+    requested_fields:
+      - id
+      - display_number
+      - description
+      - status
+      - "practice_area{id,name}"
+      - "client{id,name}"
+      - pending_date
+      - open_date
+      - close_date
+      - statute_of_limitations
+    required_params: []
+    optional_params: [status, query, order, limit]
+    response_shape: { data: list }
+    read_write: read
+
+  - name: get_matter
+    method: GET
+    path: /api/v4/matters/{id}
+    allowed_fields:
+      - id
+      - display_number
+      - description
+      - status
+      - "practice_area{id,name}"
+      - "client{id,name,type}"
+      - "responsible_attorney{id,name}"
+      - pending_date
+      - open_date
+      - close_date
+      - statute_of_limitations
+      - billable
+      - billing_method
+      - "custom_field_values{id,field_name,value}"
+    requested_fields:
+      - id
+      - display_number
+      - description
+      - status
+      - "practice_area{id,name}"
+      - "client{id,name,type}"
+      - "responsible_attorney{id,name}"
+      - pending_date
+      - open_date
+      - close_date
+      - statute_of_limitations
+      - billable
+      - billing_method
+      - "custom_field_values{id,field_name,value}"
+    required_params: [id]
+    optional_params: []
+    response_shape: { data: object }
+    read_write: read
+
+  - name: create_matter
+    method: POST
+    path: /api/v4/matters
+    allowed_fields:
+      - id
+      - display_number
+      - description
+      - status
+      - "practice_area{id,name}"
+      - "client{id,name}"
+    requested_fields:
+      - id
+      - display_number
+      - description
+      - status
+      - "practice_area{id,name}"
+      - "client{id,name}"
+    required_params: [description, client_id]
+    optional_params: [status, practice_area_id, responsible_attorney_id]
+    response_shape: { data: object }
+    read_write: write
+
+  - name: update_matter
+    method: PATCH
+    path: /api/v4/matters/{id}
+    allowed_fields:
+      - id
+      - display_number
+      - description
+      - status
+      - "practice_area{id,name}"
+    requested_fields:
+      - id
+      - display_number
+      - description
+      - status
+      - "practice_area{id,name}"
+    required_params: [matter_id]
+    optional_params:
+      [
+        description,
+        status,
+        responsible_attorney_id,
+        practice_area_id,
+        close_date,
+      ]
+    response_shape: { data: object }
+    read_write: write
+
+  # ── Contacts ──────────────────────────────────────────────────────────────
+
+  - name: list_contacts
+    method: GET
+    path: /api/v4/contacts
+    allowed_fields:
+      - id
+      - name
+      - type
+      - first_name
+      - last_name
+      - "company{id,name}"
+      - "email_addresses{id,address}"
+      - "phone_numbers{id,number}"
+    requested_fields:
+      - id
+      - name
+      - type
+      - first_name
+      - last_name
+      - "company{id,name}"
+      - "email_addresses{id,address}"
+      - "phone_numbers{id,number}"
+    required_params: []
+    optional_params: [query, type, order, limit]
+    response_shape: { data: list }
+    read_write: read
+
+  - name: get_contact
+    method: GET
+    path: /api/v4/contacts/{id}
+    allowed_fields:
+      - id
+      - name
+      - type
+      - first_name
+      - last_name
+      - title
+      - "company{id,name}"
+      - "email_addresses{id,address,name}"
+      - "phone_numbers{id,number,name}"
+      - "addresses{id,street,city,province,postal_code,country}"
+    requested_fields:
+      - id
+      - name
+      - type
+      - first_name
+      - last_name
+      - title
+      - "company{id,name}"
+      - "email_addresses{id,address,name}"
+      - "phone_numbers{id,number,name}"
+      - "addresses{id,street,city,province,postal_code,country}"
+    required_params: [contact_id]
+    optional_params: []
+    response_shape: { data: object }
+    read_write: read
+
+  - name: create_contact
+    method: POST
+    path: /api/v4/contacts
+    allowed_fields:
+      - id
+      - name
+      - type
+      - "email_addresses{id,address}"
+      - "phone_numbers{id,number}"
+    requested_fields:
+      - id
+      - name
+      - type
+      - "email_addresses{id,address}"
+      - "phone_numbers{id,number}"
+    required_params: []
+    optional_params: [first_name, last_name, name, contact_type, email, phone]
+    response_shape: { data: object }
+    read_write: write
+
+  # ── Tasks ─────────────────────────────────────────────────────────────────
+
+  - name: list_tasks
+    method: GET
+    path: /api/v4/tasks
+    allowed_fields:
+      - id
+      - name
+      - description
+      - priority
+      - status
+      - due_at
+      - "matter{id,display_number}"
+      - "assignee{id,name}"
+      - completed_at
+    requested_fields:
+      - id
+      - name
+      - description
+      - priority
+      - status
+      - due_at
+      - "matter{id,display_number}"
+      - "assignee{id,name}"
+      - completed_at
+    required_params: []
+    optional_params: [status, matter_id, assignee_id, order, limit]
+    response_shape: { data: list }
+    read_write: read
+
+  - name: create_task
+    method: POST
+    path: /api/v4/tasks
+    allowed_fields:
+      - id
+      - name
+      - priority
+      - status
+      - due_at
+      - "matter{id,display_number}"
+    requested_fields:
+      - id
+      - name
+      - priority
+      - status
+      - due_at
+      - "matter{id,display_number}"
+    required_params: [name]
+    optional_params: [description, due_at, priority, matter_id, assignee_id]
+    response_shape: { data: object }
+    read_write: write
+
+  - name: update_task
+    method: PATCH
+    path: /api/v4/tasks/{id}
+    allowed_fields:
+      - id
+      - name
+      - status
+      - priority
+      - due_at
+      - "matter{id,display_number}"
+    requested_fields:
+      - id
+      - name
+      - status
+      - priority
+      - due_at
+      - "matter{id,display_number}"
+    required_params: [task_id]
+    optional_params: [name, due_at, priority, status, assignee_id]
+    response_shape: { data: object }
+    read_write: write
+
+  # ── Calendar ──────────────────────────────────────────────────────────────
+
+  - name: list_calendar_entries
+    method: GET
+    path: /api/v4/calendar_entries
+    allowed_fields:
+      - id
+      - summary
+      - description
+      - start_at
+      - end_at
+      - location
+      - "matter{id,display_number}"
+      - all_day
+    requested_fields:
+      - id
+      - summary
+      - description
+      - start_at
+      - end_at
+      - location
+      - "matter{id,display_number}"
+      - all_day
+    required_params: []
+    optional_params: [start_date, end_date, limit]
+    response_shape: { data: list }
+    read_write: read
+
+  - name: create_calendar_entry
+    method: POST
+    path: /api/v4/calendar_entries
+    allowed_fields:
+      - id
+      - summary
+      - start_at
+      - end_at
+      - location
+      - "matter{id,display_number}"
+    requested_fields:
+      - id
+      - summary
+      - start_at
+      - end_at
+      - location
+      - "matter{id,display_number}"
+    required_params: [summary, start_at, end_at]
+    optional_params: [matter_id, description, location, attendee_ids]
+    response_shape: { data: object }
+    read_write: write
+
+  # ── Activities ────────────────────────────────────────────────────────────
+
+  - name: list_activities
+    method: GET
+    path: /api/v4/activities
+    allowed_fields:
+      - id
+      - type
+      - date
+      - quantity
+      - price
+      - total
+      - note
+      - "matter{id,display_number}"
+      - "user{id,name}"
+    requested_fields:
+      - id
+      - type
+      - date
+      - quantity
+      - price
+      - total
+      - note
+      - "matter{id,display_number}"
+      - "user{id,name}"
+    required_params: []
+    optional_params:
+      [
+        matter_id,
+        user_id,
+        activity_type,
+        start_date,
+        end_date,
+        created_since,
+        updated_since,
+        order,
+        limit,
+      ]
+    response_shape: { data: list }
+    read_write: read
+
+  - name: create_time_entry
+    method: POST
+    path: /api/v4/activities
+    allowed_fields:
+      - id
+      - type
+      - date
+      - quantity
+      - total
+      - note
+      - "matter{id,display_number}"
+    requested_fields:
+      - id
+      - type
+      - date
+      - quantity
+      - total
+      - note
+      - "matter{id,display_number}"
+    required_params: [date, quantity_seconds, matter_id]
+    optional_params: [note, user_id]
+    response_shape: { data: object }
+    read_write: write
+
+  - name: create_expense_entry
+    method: POST
+    path: /api/v4/activities
+    allowed_fields:
+      - id
+      - date
+      - quantity
+      - price
+      - note
+      - non_billable
+      - "matter{id,display_number}"
+    requested_fields:
+      - id
+      - date
+      - quantity
+      - price
+      - note
+      - non_billable
+      - "matter{id,display_number}"
+    required_params: [matter_id, amount_dollars, description]
+    optional_params: [date, quantity, non_billable]
+    response_shape: { data: object }
+    read_write: write
+
+  # ── Billing ───────────────────────────────────────────────────────────────
+  # IMPORTANT: bills resource does NOT support matter{...} expansion.
+  # Use client{id,name} for client context. Clio rejects this expansion.
+
+  - name: list_bills
+    method: GET
+    path: /api/v4/bills
+    allowed_fields:
+      - id
+      - number
+      - subject
+      - state
+      - issued_at
+      - due_at
+      - total
+      - balance
+      - "client{id,name}"
+    requested_fields:
+      - id
+      - number
+      - subject
+      - state
+      - issued_at
+      - due_at
+      - total
+      - balance
+      - "client{id,name}"
+    required_params: []
+    optional_params:
+      [
+        status,
+        overdue,
+        matter_id,
+        client_id,
+        issued_after,
+        issued_before,
+        created_since,
+        updated_since,
+        order,
+        limit,
+      ]
+    response_shape: { data: list }
+    read_write: read
+
+  # ── Documents ─────────────────────────────────────────────────────────────
+
+  - name: list_documents
+    method: GET
+    path: /api/v4/documents
+    allowed_fields:
+      - id
+      - name
+      - content_type
+      - created_at
+      - updated_at
+      - "matter{id,display_number}"
+    requested_fields:
+      - id
+      - name
+      - content_type
+      - created_at
+      - updated_at
+      - "matter{id,display_number}"
+    required_params: []
+    optional_params:
+      [matter_id, query, created_since, updated_since, order, limit]
+    response_shape: { data: list }
+    read_write: read
+
+  - name: upload_document_create
+    method: POST
+    path: /api/v4/documents
+    allowed_fields:
+      - id
+      - name
+      - "latest_document_version{id,put_url}"
+    requested_fields:
+      - id
+      - name
+      - "latest_document_version{id,put_url}"
+    required_params: [file_path]
+    optional_params: [filename, matter_id, folder_id]
+    response_shape: { data: object }
+    read_write: write
+
+  - name: upload_document_finalize
+    method: PATCH
+    path: /api/v4/documents/{id}
+    allowed_fields:
+      - id
+      - name
+      - "matter{id,display_number}"
+    requested_fields:
+      - id
+      - name
+      - "matter{id,display_number}"
+    required_params: [document_id]
+    optional_params: []
+    response_shape: { data: object }
+    read_write: write
+
+  - name: download_document
+    method: GET
+    path: /api/v4/documents/{id}
+    allowed_fields:
+      - id
+      - name
+      - "latest_document_version{id,filename,download_url}"
+    requested_fields:
+      - id
+      - name
+      - "latest_document_version{id,filename,download_url}"
+    required_params: [document_id]
+    optional_params: [output_path]
+    response_shape: { data: object }
+    read_write: read
+
+  # ── Notes ─────────────────────────────────────────────────────────────────
+
+  - name: list_notes
+    method: GET
+    path: /api/v4/notes
+    allowed_fields:
+      - id
+      - subject
+      - detail
+      - type
+      - date
+      - "matter{id,display_number}"
+    requested_fields:
+      - id
+      - subject
+      - detail
+      - type
+      - date
+      - "matter{id,display_number}"
+    required_params: []
+    optional_params:
+      [matter_id, contact_id, created_since, updated_since, order, limit]
+    response_shape: { data: list }
+    read_write: read
+
+  - name: create_note
+    method: POST
+    path: /api/v4/notes
+    allowed_fields: [id, subject, detail, type, date]
+    requested_fields: [id, subject, detail, type, date]
+    required_params: [subject, detail]
+    optional_params: [note_type, matter_id, contact_id]
+    response_shape: { data: object }
+    read_write: write
+
+  # ── Utility ───────────────────────────────────────────────────────────────
+
+  - name: list_practice_areas
+    method: GET
+    path: /api/v4/practice_areas
+    allowed_fields: [id, name]
+    requested_fields: [id, name]
+    required_params: []
+    optional_params: []
+    response_shape: { data: list }
+    read_write: read
+
+  - name: list_users
+    method: GET
+    path: /api/v4/users
+    allowed_fields: [id, name, email, enabled]
+    requested_fields: [id, name, email, enabled]
+    required_params: []
+    optional_params: [limit]
+    response_shape: { data: list }
+    read_write: read
+
+  - name: list_communications
+    method: GET
+    path: /api/v4/communications
+    allowed_fields:
+      - id
+      - subject
+      - body
+      - type
+      - date
+      - "matter{id,display_number}"
+      - "senders{id,name}"
+      - "receivers{id,name}"
+    requested_fields:
+      - id
+      - subject
+      - body
+      - type
+      - date
+      - "matter{id,display_number}"
+      - "senders{id,name}"
+      - "receivers{id,name}"
+    required_params: []
+    optional_params:
+      [
+        matter_id,
+        received_since,
+        received_before,
+        created_since,
+        updated_since,
+        order,
+        limit,
+      ]
+    response_shape: { data: list }
+    read_write: read
+
+  - name: add_relationship
+    method: POST
+    path: /api/v4/relationships
+    allowed_fields:
+      - id
+      - description
+      - "matter{id}"
+      - "contact{id,name}"
+    requested_fields:
+      - id
+      - description
+      - "matter{id}"
+      - "contact{id,name}"
+    required_params: [matter_id, contact_id, description]
+    optional_params: []
+    response_shape: { data: object }
+    read_write: write
+
+  # ── Timers ────────────────────────────────────────────────────────────────
+  # IMPORTANT: timer resource does NOT support matter{...} or user{...} expansion.
+  # Schema: id/etag/start_time/elapsed_time/created_at/updated_at only.
+  # Clio rejects this expansion.
+
+  - name: list_timers
+    method: GET
+    path: /api/v4/timer
+    allowed_fields: [id, etag, start_time, elapsed_time, created_at, updated_at]
+    requested_fields:
+      [id, etag, start_time, elapsed_time, created_at, updated_at]
+    required_params: []
+    optional_params: []
+    response_shape: { data: object }
+    read_write: read
+
+  - name: start_timer
+    method: POST
+    path: /api/v4/timer
+    allowed_fields: [id, etag, start_time, elapsed_time, created_at, updated_at]
+    requested_fields:
+      [id, etag, start_time, elapsed_time, created_at, updated_at]
+    required_params: [matter_id]
+    optional_params: []
+    response_shape: { data: object }
+    read_write: write
+
+  - name: stop_timer
+    method: DELETE
+    path: /api/v4/timer
+    allowed_fields: []
+    requested_fields: []
+    required_params: []
+    optional_params: []
+    response_shape: {}
+    read_write: write

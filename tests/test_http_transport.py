@@ -406,6 +406,58 @@ def test_loopback_host_relies_on_the_sdk_loopback_protection(monkeypatch) -> Non
     assert refused.status_code == 403
 
 
+def test_empty_transport_selects_stdio(monkeypatch) -> None:
+    called: list[bool] = []
+    monkeypatch.setattr(server.mcp, "run", lambda: called.append(True))
+    for value in ("", "   "):
+        monkeypatch.setenv("CLIO_MCP_TRANSPORT", value)
+        assert server._requested_transport() == "stdio"
+        server.main()
+    assert called == [True, True]
+
+
+def test_empty_host_defaults_to_loopback(monkeypatch) -> None:
+    for value in ("", " \t "):
+        monkeypatch.setenv("CLIO_MCP_HOST", value)
+        assert server._host() == "127.0.0.1"
+
+
+def test_localhost_spelling_is_non_loopback_without_allowed_hosts(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("CLIO_MCP_HOST", "LOCALHOST")
+    monkeypatch.delenv("CLIO_MCP_ALLOWED_HOSTS", raising=False)
+    assert server._host() == "LOCALHOST"
+    with pytest.raises(SystemExit) as excinfo:
+        server.create_serve_app()
+    assert "CLIO_MCP_ALLOWED_HOSTS" in str(excinfo.value)
+
+
+def test_server_import_survives_missing_distribution() -> None:
+    import subprocess
+    import sys
+
+    script = """
+import importlib.metadata
+import mcp.server  # httpx2 reads its own metadata while the SDK imports
+
+def missing(distribution):
+    raise importlib.metadata.PackageNotFoundError(distribution)
+
+importlib.metadata.version = missing
+import clio_mcp.server
+print(clio_mcp.server.mcp.name)
+"""
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert completed.stdout.strip() == "clio-mcp"
+
+
 def test_non_loopback_bind_enforces_allowed_hosts_and_origins(monkeypatch) -> None:
     monkeypatch.setenv("CLIO_MCP_HOST", "0.0.0.0")
     monkeypatch.setenv("CLIO_MCP_ALLOWED_HOSTS", "clio.example")

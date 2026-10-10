@@ -372,7 +372,7 @@ dev = [
 requires-dist = [
     { name = "cryptography", specifier = ">=49.0.0" },
     { name = "keyring", specifier = ">=25.7.0" },
-    { name = "mcp", specifier = "==2.3.0" },
+    { name = "mcp", specifier = ">=2.3,<3" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "requests", specifier = ">=2.34.2" },
 ]

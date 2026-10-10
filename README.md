@@ -88,6 +88,39 @@ For a source checkout, use `uv` with an absolute repository path:
 }
 ```
 
+## HTTP mode
+
+Complete the setup above, then select stateless Streamable HTTP. The endpoint
+is `http://127.0.0.1:8080/mcp`. Stdio remains the default transport.
+
+| Environment variable | Default | Purpose |
+| --- | --- | --- |
+| `CLIO_MCP_TRANSPORT` | `stdio` | Set to `streamable-http` to serve HTTP. |
+| `CLIO_MCP_HOST` | `127.0.0.1` | Address to bind. |
+| `PORT` | `8080` | Integer listening port. |
+| `CLIO_MCP_ALLOWED_HOSTS` | Unset | Required for a non-loopback bind; comma-separated accepted Host values, including ports where needed (`clio.example:8080` or `clio.example:*`). |
+| `CLIO_MCP_ALLOWED_ORIGINS` | Unset | Optional comma-separated accepted Origin values (`https://clio.example`); other Origins receive 403. Requests without an Origin are accepted. Loopback binds use the SDK's local Host/Origin allowlist. |
+| `CLIO_CLIENT_ID` | Stored credential | Your Clio application's Client ID. |
+| `CLIO_CLIENT_SECRET` | Stored credential | Your Clio application's Client Secret. |
+| `CLIO_REQUESTS_PER_MINUTE` | `50` | Shared outbound Clio request quota. |
+| `CLIO_MCP_USE_KEYRING` | `1` | Set to `0` to use local credential files. |
+| `CLIO_MCP_HOME` | `~/.clio-mcp` | Local credential directory. |
+| `CLIO_MCP_TOKEN_KEY` | Unset | Optional Fernet key for the local OAuth token cache. |
+| `CLIO_MCP_TOKEN_KEY_RECOVERY` | Unset | Existing credential recovery setting; see credential storage below. |
+| `CLIO_MCP_FILES_DIR` | `~/clio-mcp-files` | Confined directory for document tools. |
+| `CLIO_MCP_MAX_FILE_BYTES` | `104857600` | Maximum document transfer size. |
+| `CLIO_MCP_TRANSFER_DEADLINE_SECONDS` | Calculated from size | Optional positive total document transfer deadline. |
+
+```bash
+CLIO_MCP_TRANSPORT=streamable-http PORT=8080 uv run clio-mcp
+```
+
+HTTP uses the same local credentials and OAuth token storage as stdio;
+credentials are never supplied by a request. Host and Origin validation are
+enabled. Each protocol 2026-07-28 POST is self-contained, with no initialization
+handshake or session ID. The SDK also serves older protocol versions at `/mcp`.
+The SDK's SSE response default is retained so a disconnect cancels the request.
+
 ## Tools
 
 - `who_am_i`

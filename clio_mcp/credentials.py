@@ -328,7 +328,7 @@ def _private_directory(path: Path) -> int | None:
     )
     try:
         _check_identity(os.fstat(fd), directory=True)
-        os.fchmod(fd, 0o700)
+        os.fchmod(fd, 0o700)  # nosemgrep: python.lang.security.audit.insecure-file-permissions.insecure-file-permissions -- owner-only private credential directory
         final = os.fstat(fd)
         _check_identity(final, directory=True)
         if stat.S_IMODE(final.st_mode) != 0o700:

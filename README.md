@@ -1,3 +1,5 @@
+<p align="center"><a href="https://rosenadvertising.com/datalink/?utm_source=github&utm_medium=readme-banner&utm_campaign=clio-mcp"><img src="https://image.rosenadvertising.com/datalink/readme-banner-v2.png" alt="DataLink by Rosen Advertising: don't want to install and run this yourself? Get it hosted." width="100%"></a></p>
+
 # Clio MCP server
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
